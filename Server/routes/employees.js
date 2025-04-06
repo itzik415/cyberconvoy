@@ -4,10 +4,7 @@ const supabase = require("../db");
 
 router.get("/", async (req, res) => {
   try {
-    // const { data, error } = await supabase.from("employees").select("*");
     const { data, error } = await supabase.from("employees").select("*");
-    console.log(data);
-    console.log(error);
 
     if (error) {
       throw error;
