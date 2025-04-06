@@ -1,11 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const client = require("../db");
+const supabase = require("../db");
 
 router.get("/", async (req, res) => {
   try {
-    const data = await client.query(`SELECT * FROM "employees"`);
-    res.json(data.rows);
+    // const { data, error } = await supabase.from("employees").select("*");
+    const { data, error } = await supabase.from("employees").select("*");
+    console.log(data);
+    console.log(error);
+
+    if (error) {
+      throw error;
+    }
+
+    res.json(data);
   } catch (error) {
     console.error(error);
     res.status(500).send("Error fetching employees");
@@ -16,18 +24,23 @@ router.delete("/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await client.query(
-      `DELETE FROM "employees" WHERE id = $1 RETURNING *`,
-      [id]
-    );
+    const { data, error } = await supabase
+      .from("employees")
+      .delete()
+      .eq("id", id)
+      .select();
 
-    if (result.rowCount === 0) {
+    if (error) {
+      throw error;
+    }
+
+    if (data.length === 0) {
       return res.status(404).send("Employee not found");
     }
 
     res.status(200).json({
       message: "Employee deleted successfully",
-      employee: result.rows[0],
+      employee: data[0],
     });
   } catch (error) {
     console.error(error);
@@ -37,15 +50,20 @@ router.delete("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   const { name, department, email } = req.body;
+
   try {
-    const result = await client.query(
-      `INSERT INTO "employees" (name, department, email) VALUES ($1, $2, $3) RETURNING *`,
-      [name, department, email]
-    );
+    const { data, error } = await supabase
+      .from("employees")
+      .insert([{ name, department, email }])
+      .select();
+
+    if (error) {
+      throw error;
+    }
 
     res.status(201).json({
       message: "Employee added successfully",
-      employee: result.rows[0],
+      employee: data[0],
     });
   } catch (error) {
     console.error(error);
@@ -54,20 +72,27 @@ router.post("/", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const { id, name, department, email } = req.body;
-  try {
-    const result = await client.query(
-      `UPDATE "employees" SET name = $1, department = $2, email = $3 WHERE id = $4 RETURNING *`,
-      [name, department, email, id]
-    );
+  const { id } = req.params;
+  const { name, department, email } = req.body;
 
-    if (result.rowCount === 0) {
+  try {
+    const { data, error } = await supabase
+      .from("employees")
+      .update({ name, department, email })
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data.length === 0) {
       return res.status(404).send("Employee not found");
     }
 
     res.status(200).json({
       message: "Employee updated successfully",
-      employee: result.rows[0],
+      employee: data[0],
     });
   } catch (error) {
     console.error(error);

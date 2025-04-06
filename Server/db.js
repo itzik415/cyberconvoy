@@ -1,12 +1,9 @@
 require("dotenv").config();
-const pg = require("pg");
-const { Client } = pg;
+const { createClient } = require("@supabase/supabase-js");
 
-const client = new Client({
-  connectionString: process.env.DB_URL,
-  ssl: false,
-});
+// Please create an .env file in the server root directory with the variables i gave you.
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-client.connect();
-
-module.exports = client;
+module.exports = supabase;
